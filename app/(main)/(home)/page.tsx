@@ -5,6 +5,8 @@ import NewCollectionProducts from "@/component/main/home/NewCollectionProducts";
 import PopulerCategories from "@/component/main/home/PopulerCategories";
 import db from "@/prisma/db";
 
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   const products = await db.product.findMany({
     include: {

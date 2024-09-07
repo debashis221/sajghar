@@ -11,8 +11,6 @@ const ProductTable = async () => {
     },
   });
 
-  console.log(products)
-
   return <ProductPage products={products} />;
 };
 
