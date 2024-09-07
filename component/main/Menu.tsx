@@ -1,55 +1,30 @@
-"use client";
 import Link from "next/link";
-import { useState, useEffect } from "react";
 import db from "@/prisma/db";
 
-const Menu = () => {
-  const [categories, setCategories] = useState([]);
-  const [offers, setOffers] = useState({ thirtyOff: [], fiftyOff: [] });
+const Menu = async () => {
+  const categories = await db.productCategory.findMany({
+    orderBy: {
+      id: "desc",
+    },
+  });
 
-  const fetchCategories = async () => {
-    try {
-      const categoriesData = await db.productCategory.findMany({
-        orderBy: {
-          id: "desc",
-        },
-      });
-      setCategories(categoriesData);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-    }
-  };
+  const products = await db.product.findMany({
+    where: {
+      status: "ACTIVE", // Filter for active products
+      offer: {
+        in: ["30_off", "50_off"], // Filter for products with 30_off or 50_off offer
+      },
+    },
+    include: {
+      category: true, // Include the related category data
+    },
+    orderBy: {
+      id: "desc",
+    },
+  });
+  const thirtyOff = products.filter((product) => product.offer === "30_off");
+  const fiftyOff = products.filter((product) => product.offer === "50_off");
 
-  const getoffer = async () => {
-    try {
-      const products = await db.product.findMany({
-        where: {
-          status: "ACTIVE", // Filter for active products
-          offer: {
-            in: ["30_off", "50_off"], // Filter for products with 30_off or 50_off offer
-          },
-        },
-        include: {
-          category: true, // Include the related category data
-        },
-        orderBy: {
-          id: "desc",
-        },
-      });
-      const thirtyOff = products.filter(
-        (product) => product.offer === "30_off"
-      );
-      const fiftyOff = products.filter((product) => product.offer === "50_off");
-      setOffers({ thirtyOff, fiftyOff });
-    } catch (error) {
-      console.error("Error fetching products:", error);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-    getoffer();
-  }, []);
   return (
     <ul className="navbar-nav ml-auto mr-auto">
       <li className="nav-item m-menu">
@@ -148,7 +123,7 @@ const Menu = () => {
                         Flat 30% Off
                       </h6>
                       <ul className="list-unstyled">
-                        {offers.thirtyOff.map((product) => (
+                        {thirtyOff.map((product) => (
                           <li key={product.id} className="nav-item">
                             <Link
                               href={`/${product.category.slug}/${product.slug}`}
@@ -165,7 +140,7 @@ const Menu = () => {
                         Get Upto 50% Off
                       </h6>
                       <ul className="list-unstyled">
-                        {offers.fiftyOff.map((product) => (
+                        {fiftyOff.map((product) => (
                           <li key={product.id} className="nav-item">
                             <Link
                               href={`/${product.category.slug}/${product.slug}`}
