@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import axios from "axios";
 import db from "@/prisma/db";
 
 const Menu = () => {
@@ -10,8 +9,12 @@ const Menu = () => {
 
   const fetchCategories = async () => {
     try {
-      const response = await axios.get("/api/frontend/product-category/");
-      setCategories(response.data);
+      const categoriesData = await db.productCategory.findMany({
+        orderBy: {
+          id: "desc",
+        },
+      });
+      setCategories(categoriesData);
     } catch (error) {
       console.error("Error fetching categories:", error);
     }
