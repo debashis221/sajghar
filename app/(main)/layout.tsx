@@ -4,7 +4,11 @@ import Footer from "@/component/main/Footer";
 
 import Script from "next/script";
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en" suppressHydrationWarning>
       <head>

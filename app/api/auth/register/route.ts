@@ -1,7 +1,8 @@
-import { hash } from 'bcryptjs';
-import db from '@/prisma/db';
+import { hash } from "bcrypt";
+import db from "@/prisma/db";
+import { NextRequest } from "next/server";
 
-export async function POST(req) {
+export async function POST(req: NextRequest) {
   try {
     // Parse the request body
     const { name, email, password } = await req.json();
@@ -14,7 +15,7 @@ export async function POST(req) {
 
     if (existingUser) {
       console.log("User already exists");
-      return new Response(JSON.stringify({ message: 'User already exists' }), {
+      return new Response(JSON.stringify({ message: "User already exists" }), {
         status: 409,
       });
     }
@@ -34,13 +35,12 @@ export async function POST(req) {
     console.log("User created:", user);
 
     // Return success response
-    return new Response(JSON.stringify({ message: 'User created' }), {
+    return new Response(JSON.stringify({ message: "User created" }), {
       status: 201,
     });
-
   } catch (error) {
     console.error("Error occurred:", error);
-    return new Response(JSON.stringify({ message: 'Internal Server Error' }), {
+    return new Response(JSON.stringify({ message: "Internal Server Error" }), {
       status: 500,
     });
   }
