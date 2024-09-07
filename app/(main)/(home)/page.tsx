@@ -1,17 +1,9 @@
+import About from "@/component/main/home/About";
+import BestSellingProduct from "@/component/main/home/BestSellingProducts";
+import HeroSection from "@/component/main/home/HeroSection";
+import NewCollectionProducts from "@/component/main/home/NewCollectionProducts";
+import PopulerCategories from "@/component/main/home/PopulerCategories";
 import db from "@/prisma/db";
-import { lazy } from "react";
-
-const BestSellingProduct = lazy(() =>
-  import("@/component/main/home/BestSellingProducts")
-);
-const NewCollectionProducts = lazy(() =>
-  import("@/component/main/home/NewCollectionProducts")
-);
-const HeroSection = lazy(() => import("@/component/main/home/HeroSection"));
-const PopulerCategories = lazy(() =>
-  import("@/component/main/home/PopulerCategories")
-);
-const About = lazy(() => import("@/component/main/home/About"));
 
 export default async function Home() {
   const products = await db.product.findMany({
