@@ -1,7 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from "next/server";
+import db from "@/prisma/db";
 
-const prisma = new PrismaClient();
 
 export async function POST(req) {
   try {
@@ -27,11 +25,11 @@ export async function POST(req) {
     const data = {
       youtube_link: youtubeLink || null,
       facebook_link: facebookLink || null,
-      created_at: new Date(), // Optional if @default(now()) is set in the Prisma schema
+      created_at: new Date(), // Optional if @default(now()) is set in the db schema
     };
 
     // Create the new collection in the database
-    const newCollection = await prisma.newCollection.create({
+    const newCollection = await db.newCollection.create({
       data,
     });
 

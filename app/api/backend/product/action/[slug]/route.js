@@ -1,16 +1,13 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from "next/server";
 import path from "path";
-import { writeFile,mkdir  } from "fs/promises";
-
-const prisma = new PrismaClient();
+import { writeFile } from "fs/promises";
+import db from "@/prisma/db";
 
 // Utility function to generate a slug from a string
 const generateSlug = (str) => {
   return str
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric characters with hyphens
-    .replace(/^-+|-+$/g, '');     // Trim leading and trailing hyphens
+    .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric characters with hyphens
+    .replace(/^-+|-+$/g, ""); // Trim leading and trailing hyphens
 };
 
 // Utility function to generate a unique slug
@@ -19,7 +16,9 @@ const generateUniqueSlug = async (baseSlug, excludeId) => {
   let count = 1;
 
   // Check if the slug exists in the database and modify if necessary
-  while (await prisma.product.findFirst({ where: { slug, NOT: { id: excludeId } } })) {
+  while (
+    await db.product.findFirst({ where: { slug, NOT: { id: excludeId } } })
+  ) {
     slug = `${baseSlug}-${count}`;
     count += 1;
   }
@@ -31,24 +30,28 @@ const generateUniqueSlug = async (baseSlug, excludeId) => {
 export async function GET(req) {
   try {
     const url = new URL(req.url);
-    const id = url.pathname.split('/').pop();
+    const id = url.pathname.split("/").pop();
 
-    const product = await prisma.product.findUnique({
+    const product = await db.product.findUnique({
       where: { id: Number(id) },
       include: {
         category: true,
-        images:true // Include related category data
-      }
+        images: true, // Include related category data
+      },
     });
 
     if (!product) {
-      return new Response(JSON.stringify({ error: 'Product not found' }), { status: 404 });
+      return new Response(JSON.stringify({ error: "Product not found" }), {
+        status: 404,
+      });
     }
 
     return new Response(JSON.stringify(product), { status: 200 });
   } catch (error) {
     console.error("Error fetching product:", error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+    });
   }
 }
 
@@ -57,7 +60,7 @@ export async function PUT(req) {
   try {
     const formData = await req.formData();
     const url = new URL(req.url);
-    const id = url.pathname.split('/').pop();
+    const id = url.pathname.split("/").pop();
 
     const imageFiles = formData.getAll("images"); // Use getAll to retrieve multiple images
     const name = formData.get("name");
@@ -68,16 +71,20 @@ export async function PUT(req) {
     const price = formData.get("price");
 
     if (!id) {
-      return new Response(JSON.stringify({ error: 'Missing product ID' }), { status: 400 });
+      return new Response(JSON.stringify({ error: "Missing product ID" }), {
+        status: 400,
+      });
     }
 
     // Find the existing product
-    const existingProduct = await prisma.product.findUnique({
+    const existingProduct = await db.product.findUnique({
       where: { id: Number(id) },
     });
 
     if (!existingProduct) {
-      return new Response(JSON.stringify({ error: 'Product not found' }), { status: 404 });
+      return new Response(JSON.stringify({ error: "Product not found" }), {
+        status: 404,
+      });
     }
 
     // Prepare update data
@@ -112,11 +119,17 @@ export async function PUT(req) {
       const productImages = [];
       for (const imageFile of imageFiles) {
         const buffer = Buffer.from(await imageFile.arrayBuffer());
-        const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(imageFile.name)}`;
-        const filePath = path.join(process.cwd(), "public/productimages", uniqueFilename);
+        const uniqueFilename = `${Date.now()}-${Math.round(
+          Math.random() * 1e9
+        )}${path.extname(imageFile.name)}`;
+        const filePath = path.join(
+          process.cwd(),
+          "public/productimages",
+          uniqueFilename
+        );
         await writeFile(filePath, buffer);
 
-        const newImage = await prisma.productImage.create({
+        const newImage = await db.productImage.create({
           data: {
             product_id: existingProduct.id,
             image_path: `/productimages/${uniqueFilename}`,
@@ -134,36 +147,48 @@ export async function PUT(req) {
     }
 
     // Update the product with new data
-    const updatedProduct = await prisma.product.update({
+    const updatedProduct = await db.product.update({
       where: { id: Number(id) },
       data: updateData,
     });
 
-    return new Response(JSON.stringify({ message: 'Product updated successfully', product: updatedProduct }), { status: 200 });
+    return new Response(
+      JSON.stringify({
+        message: "Product updated successfully",
+        product: updatedProduct,
+      }),
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error updating product:", error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error', details: error.message }), { status: 500 });
+    return new Response(
+      JSON.stringify({
+        error: "Internal Server Error",
+        details: error.message,
+      }),
+      { status: 500 }
+    );
   }
 }
-
-
 
 // DELETE: Delete a product by ID
 export async function DELETE(req) {
   try {
     const url = new URL(req.url);
-    const id = url.pathname.split('/').pop();
+    const id = url.pathname.split("/").pop();
 
-    const existingProduct = await prisma.product.findUnique({
+    const existingProduct = await db.product.findUnique({
       where: { id: Number(id) },
     });
 
     if (!existingProduct) {
-      return new Response(JSON.stringify({ error: 'Product not found' }), { status: 404 });
+      return new Response(JSON.stringify({ error: "Product not found" }), {
+        status: 404,
+      });
     }
 
     // Delete associated images from the file system and database
-    const productImages = await prisma.productImage.findMany({
+    const productImages = await db.productImage.findMany({
       where: { product_id: Number(id) },
     });
 
@@ -175,20 +200,26 @@ export async function DELETE(req) {
         console.error("Error deleting image file:", err);
       }
 
-      await prisma.productImage.delete({
+      await db.productImage.delete({
         where: { id: image.id },
       });
     }
 
     // Delete the product
-    await prisma.product.delete({
+    await db.product.delete({
       where: { id: Number(id) },
     });
 
-    return new Response(JSON.stringify({ message: 'Product and associated images deleted successfully' }), { status: 200 });
+    return new Response(
+      JSON.stringify({
+        message: "Product and associated images deleted successfully",
+      }),
+      { status: 200 }
+    );
   } catch (error) {
     console.error("Error deleting product:", error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+    });
   }
 }
-

@@ -1,8 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import nodemailer from 'nodemailer';
-import { NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
+import db from "@/prisma/db";
+import nodemailer from "nodemailer";
 
 export async function POST(req) {
   try {
@@ -15,11 +12,14 @@ export async function POST(req) {
     const message = formData.get("message");
 
     if (!product_name || !full_name || !email || !phone) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400 }
+      );
     }
 
     // Create the new inquiry with the provided details
-    const newInquiry = await prisma.productInquiry.create({
+    const newInquiry = await db.productInquiry.create({
       data: {
         productName: product_name,
         fullName: full_name,
@@ -31,7 +31,7 @@ export async function POST(req) {
 
     // Set up Nodemailer transporter
     const transporter = nodemailer.createTransport({
-      service: 'Gmail', // or another email service
+      service: "Gmail", // or another email service
       auth: {
         user: process.env.EMAIL_USER, // Your email address
         pass: process.env.EMAIL_PASS, // Your email password or app-specific password
@@ -42,7 +42,7 @@ export async function POST(req) {
     const mailOptionsToAdmin = {
       from: process.env.EMAIL_USER,
       to: process.env.ADMIN_EMAIL_USER,
-      subject: 'New Product Inquiry Received',
+      subject: "New Product Inquiry Received",
       text: `You have a new product inquiry from ${full_name}.
       
 Product: ${product_name}
@@ -56,7 +56,7 @@ Message: ${message}`,
     const mailOptionsToUser = {
       from: process.env.EMAIL_USER,
       to: email,
-      subject: 'Thank you for your inquiry!',
+      subject: "Thank you for your inquiry!",
       text: `Dear ${full_name},
 
 Thank you for reaching out to us regarding the ${product_name}. We have received your inquiry and will contact you very soon.
@@ -72,6 +72,8 @@ Sajghor`,
     return new Response(JSON.stringify(newInquiry), { status: 201 });
   } catch (error) {
     console.error("Error creating product inquiry:", error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+    });
   }
 }

@@ -1,16 +1,13 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from "next/server";
 import path from "path";
 import { writeFile } from "fs/promises";
-
-const prisma = new PrismaClient();
+import db from "@/prisma/db";
 
 // Utility function to generate a slug from a string
 const generateSlug = (str) => {
   return str
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')  // Replace non-alphanumeric characters with hyphens
-    .replace(/^-+|-+$/g, '');     // Trim leading and trailing hyphens
+    .replace(/[^a-z0-9]+/g, "-") // Replace non-alphanumeric characters with hyphens
+    .replace(/^-+|-+$/g, ""); // Trim leading and trailing hyphens
 };
 
 // Utility function to generate a unique slug
@@ -19,7 +16,7 @@ const generateUniqueSlug = async (baseSlug) => {
   let count = 1;
 
   // Check if the slug exists in the database and modify if necessary
-  while (await prisma.product.findUnique({ where: { slug } })) {
+  while (await db.product.findUnique({ where: { slug } })) {
     slug = `${baseSlug}-${count}`;
     count += 1;
   }
@@ -50,14 +47,19 @@ export async function POST(req) {
 
     // Validate required fields
     if (!imageFiles.length || !name || !category_id) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+      return new Response(
+        JSON.stringify({ error: "Missing required fields" }),
+        { status: 400 }
+      );
     }
 
     // Validate file types (only allow images)
     const allowedTypes = ["image/jpeg", "image/png", "image/gif"];
     for (const imageFile of imageFiles) {
       if (!allowedTypes.includes(imageFile.type)) {
-        return new Response(JSON.stringify({ error: 'Invalid file type' }), { status: 400 });
+        return new Response(JSON.stringify({ error: "Invalid file type" }), {
+          status: 400,
+        });
       }
     }
 
@@ -66,11 +68,11 @@ export async function POST(req) {
     const slug = await generateUniqueSlug(baseSlug);
 
     // Create the new product without images initially
-    const newProduct = await prisma.product.create({
+    const newProduct = await db.product.create({
       data: {
         name,
         category_id: parseInt(category_id, 10),
-        image: '', // Placeholder for primary image, will be updated later
+        image: "", // Placeholder for primary image, will be updated later
         description,
         offer,
         status: status || "ACTIVE", // Default to ACTIVE if not provided
@@ -86,14 +88,20 @@ export async function POST(req) {
       const buffer = Buffer.from(await imageFile.arrayBuffer());
 
       // Generate a unique filename using a timestamp and a random number
-      const uniqueFilename = `${Date.now()}-${Math.round(Math.random() * 1E9)}${path.extname(imageFile.name)}`;
-      const filePath = path.join(process.cwd(), "public/productimages", uniqueFilename);
+      const uniqueFilename = `${Date.now()}-${Math.round(
+        Math.random() * 1e9
+      )}${path.extname(imageFile.name)}`;
+      const filePath = path.join(
+        process.cwd(),
+        "public/productimages",
+        uniqueFilename
+      );
 
       // Write the file to the specified directory (public/productimages)
       await writeFile(filePath, buffer);
 
       // Store the relative path to the image in the ProductImage model
-      const newImage = await prisma.productImage.create({
+      const newImage = await db.productImage.create({
         data: {
           product_id: newProduct.id,
           image_path: `/productimages/${uniqueFilename}`,
@@ -106,16 +114,23 @@ export async function POST(req) {
 
     // Update the product with the first image as the primary image
     if (productImages.length > 0) {
-      await prisma.product.update({
+      await db.product.update({
         where: { id: newProduct.id },
         data: { image: productImages[0].image_path },
       });
     }
 
-    return new Response(JSON.stringify({ success: true, message: 'Product added successfully with images' }), { status: 201 });
-
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Product added successfully with images",
+      }),
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Error creating product with images:", error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), { status: 500 });
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
+      status: 500,
+    });
   }
 }

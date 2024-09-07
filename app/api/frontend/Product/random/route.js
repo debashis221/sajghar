@@ -1,14 +1,11 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from 'next/server';
-
-const prisma = new PrismaClient();
+import db from "@/prisma/db";
 
 export async function GET(req) {
   try {
     // Count the total number of active products
-    const totalProducts = await prisma.product.count({
+    const totalProducts = await db.product.count({
       where: {
-        status: 'ACTIVE',
+        status: "ACTIVE",
       },
     });
 
@@ -16,15 +13,15 @@ export async function GET(req) {
     const randomSkip = Math.floor(Math.random() * (totalProducts - 10));
 
     // Fetch random 10 active products with their related category information
-    const products = await prisma.product.findMany({
+    const products = await db.product.findMany({
       where: {
-        status: 'ACTIVE', // Filter for active products
+        status: "ACTIVE", // Filter for active products
       },
       include: {
         category: true, // Include the related category data
       },
       orderBy: {
-        id: 'desc',
+        id: "desc",
       },
       take: 14, // Limit to 10 products
       skip: randomSkip > 0 ? randomSkip : 0, // Skip a random number of products to fetch random ones
@@ -40,8 +37,8 @@ export async function GET(req) {
       status: 200,
     });
   } catch (error) {
-    console.error('Error retrieving products:', error);
-    return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
+    console.error("Error retrieving products:", error);
+    return new Response(JSON.stringify({ error: "Internal Server Error" }), {
       status: 500,
     });
   }

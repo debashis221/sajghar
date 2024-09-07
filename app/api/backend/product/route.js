@@ -1,12 +1,9 @@
-import { PrismaClient } from '@prisma/client';
-import { NextResponse } from "next/server";
-
-const prisma = new PrismaClient();
+import db from "@/prisma/db";
 
 export async function GET(req) {
   try {
     // Fetch products with their related category information
-    const products = await prisma.product.findMany({
+    const products = await db.product.findMany({
       include: {
         category: true, // Include the related category data
       },

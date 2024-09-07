@@ -1,15 +1,13 @@
-import { PrismaClient } from '@prisma/client';
 import path from "path";
 import { unlink } from "fs/promises";
-
-const prisma = new PrismaClient();
+import db from "@/prisma/db";
 
 export async function DELETE(req, { params }) {
   try {
     const { id } = params; // Extract the ID from the route parameters
 
     // Find the existing product image
-    const existingImage = await prisma.productImage.findUnique({
+    const existingImage = await db.productImage.findUnique({
       where: { id: Number(id) },
     });
 
@@ -22,12 +20,12 @@ export async function DELETE(req, { params }) {
     await unlink(filePath);
 
     // Delete the image record from the database
-    await prisma.productImage.delete({
+    await db.productImage.delete({
       where: { id: Number(id) },
     });
 
     // Get the remaining images for the product
-    const remainingImages = await prisma.productImage.findMany({
+    const remainingImages = await db.productImage.findMany({
       where: { product_id: existingImage.product_id },
       orderBy: { id: 'asc' }, // Order by ID or any other criteria
     });
@@ -35,7 +33,7 @@ export async function DELETE(req, { params }) {
     // Update the product's image column with the first image in the remaining list
     const newPrimaryImage = remainingImages.length > 0 ? remainingImages[0].image_path : '';
 
-    await prisma.product.update({
+    await db.product.update({
       where: { id: existingImage.product_id },
       data: { image: newPrimaryImage },
     });
