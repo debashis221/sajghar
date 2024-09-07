@@ -1,9 +1,9 @@
-import NextAuth from "next-auth";
+import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcrypt";
 import db from "@/prisma/db";
 
-export default NextAuth({
+const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -49,9 +49,6 @@ export default NextAuth({
   },
   callbacks: {
     async session({ session, token }) {
-      if (!session.user) {
-        return session;
-      }
       session.user.id = token.id as number;
       return session;
     },
@@ -66,4 +63,7 @@ export default NextAuth({
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
-});
+};
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };

@@ -19,9 +19,8 @@ export default function LoginPage() {
     const result = await signIn("credentials", {
       redirect: false,
       email,
-      password
+      password,
     });
-
     if (result?.error) {
       setError("Invalid email or password");
     } else {
@@ -38,7 +37,9 @@ export default function LoginPage() {
             <div className="card-body">
               <form onSubmit={handleSubmit}>
                 <div className="mb-3">
-                  <label htmlFor="email" className="form-label">Email</label>
+                  <label htmlFor="email" className="form-label">
+                    Email
+                  </label>
                   <input
                     id="email"
                     name="email"
@@ -49,7 +50,9 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="mb-3">
-                  <label htmlFor="password" className="form-label">Password</label>
+                  <label htmlFor="password" className="form-label">
+                    Password
+                  </label>
                   <input
                     id="password"
                     name="password"
@@ -60,7 +63,9 @@ export default function LoginPage() {
                   />
                 </div>
                 {error && <div className="alert alert-danger">{error}</div>}
-                <button type="submit" className="btn btn-primary w-100">Sign In</button>
+                <button type="submit" className="btn btn-primary w-100">
+                  Sign In
+                </button>
               </form>
             </div>
           </div>
