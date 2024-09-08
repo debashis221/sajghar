@@ -5,7 +5,7 @@ import NewCollectionProducts from "@/component/main/home/NewCollectionProducts";
 import PopulerCategories from "@/component/main/home/PopulerCategories";
 import db from "@/prisma/db";
 
-export const dynamic = 'force-dynamic'
+export const dynamic = "force-dynamic";
 
 export default async function Home() {
   const products = await db.product.findMany({
@@ -13,10 +13,15 @@ export default async function Home() {
       category: true,
     },
   });
+  const categories = await db.productCategory.findMany({
+    orderBy: {
+      id: "desc",
+    },
+  });
   return (
     <>
       <HeroSection />
-      <PopulerCategories />
+      <PopulerCategories categories={categories} />
       <BestSellingProduct products={products} />
       <NewCollectionProducts products={products} />
       <About />
